@@ -11,6 +11,8 @@ Improvements:
 * Uses the bundled Zookeeper in Kafka, instead of the one in apt (smaller Docker image)
 * The base image can now be easily changed (e.g. to alpine)
 * Kafka logs are kept on a VOLUME, giving us better IO performance
+* Simplified and improved Dockerfile, kafka startup script, and supervisord config
+* Doesn't run as `root`
 * No "proxy" or ["helios"](https://github.com/spotify/helios) bloat
 
 # Getting the image

@@ -7,24 +7,25 @@ RUN echo '2017-01-19' && \
 
 ARG SCALA_VERSION=2.11
 ARG KAFKA_VERSION=0.10.1.1
-ENV KAFKA_HOME=/opt/kafka_"$SCALA_VERSION"-"$KAFKA_VERSION"
+ENV KAFKA_HOME=/home/kafka/kafka_"$SCALA_VERSION"-"$KAFKA_VERSION"
 
-RUN wget -q http://apache.mirrors.spacedump.net/kafka/"$KAFKA_VERSION"/kafka_"$SCALA_VERSION"-"$KAFKA_VERSION".tgz -O /tmp/kafka_"$SCALA_VERSION"-"$KAFKA_VERSION".tgz && \
-    tar xfz /tmp/kafka_"$SCALA_VERSION"-"$KAFKA_VERSION".tgz -C /opt && \
-    ln -s "/opt/kafka_${SCALA_VERSION}-${KAFKA_VERSION}" "/opt/kafka" && \
-    rm /tmp/kafka_"$SCALA_VERSION"-"$KAFKA_VERSION".tgz && \
+RUN adduser --disabled-password --gecos '' kafka
+USER kafka
+WORKDIR /home/kafka
+
+RUN wget -q http://apache.mirrors.spacedump.net/kafka/"$KAFKA_VERSION"/kafka_"$SCALA_VERSION"-"$KAFKA_VERSION".tgz -O kafka.tgz && \
+    tar xfz kafka.tgz && \
+    ln -s "kafka_${SCALA_VERSION}-${KAFKA_VERSION}" "kafka" && \
+    rm kafka.tgz && \
     mkdir /tmp/kafka-logs
 
-ENV ENV PATH="$PATH:/opt/kafka/bin"
+ENV PATH="$PATH:/home/kafka/kafka_${SCALA_VERSION}-${KAFKA_VERSION}/bin"
 
-ADD scripts/start-kafka.sh /usr/bin/start-kafka.sh
-
-# Supervisor config
-ADD supervisor/kafka.conf supervisor/zookeeper.conf /etc/supervisor/conf.d/
+ADD start-kafka.sh supervisord.conf ./
 
 # 2181 is zookeeper, 9092 is kafka
 EXPOSE 2181 9092
 
 VOLUME /tmp/kafka-logs
 
-CMD ["supervisord", "--nodaemon"]
+CMD ["supervisord"]
