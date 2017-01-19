@@ -1,85 +1,42 @@
-Kafka in Docker
-===
+# About
 
-This repository provides everything you need to run Kafka in Docker.
+Single-broker Kafka + single-node Zookeper in one Docker container.
 
-For convenience also contains a packaged proxy that can be used to get data from
-a legacy Kafka 7 cluster into a dockerized Kafka 8.
+Why did I fork [spotify/docker-kafka](https://github.com/spotify/docker-kafka)?
+Improvements:
 
-Why?
----
-The main hurdle of running Kafka in Docker is that it depends on Zookeeper.
-Compared to other Kafka docker images, this one runs both Zookeeper and Kafka
-in the same container. This means:
+* Oracle's JDK over OpenJDK
+* No "proxy" or "helios" bloat
+* Kafka and Zookeeper logging output shown on stdout/stderr
 
-* No dependency on an external Zookeeper host, or linking to another container
-* Zookeeper and Kafka are configured to work together out of the box
+# Getting the image
 
-Run
----
+To build (the `--build-arg` options are not required):
 
 ```bash
-docker run -p 2181:2181 -p 9092:9092 --env ADVERTISED_HOST=`docker-machine ip \`docker-machine active\`` --env ADVERTISED_PORT=9092 spotify/kafka
+docker build --tag gg77/kafka --build-arg SCALA_VERSION=2.11 --build-arg KAFKA_VERSION=0.10.1.1 .
 ```
+
+Alternatively, pull `latest` from the [gg77/kafka DockerHub repository](https://registry.hub.docker.com/u/gg77/kafka/):
 
 ```bash
-export KAFKA=`docker-machine ip \`docker-machine active\``:9092
-kafka-console-producer.sh --broker-list $KAFKA --topic test
+docker pull gg77/kafka
 ```
+
+# Using the image
 
 ```bash
-export ZOOKEEPER=`docker-machine ip \`docker-machine active\``:2181
-kafka-console-consumer.sh --zookeeper $ZOOKEEPER --topic test
+docker run --rm -it --name kafka --hostname kafka gg77/kafka
 ```
 
-Running the proxy
------------------
-
-Take the same parameters as the spotify/kafka image with some new ones:
- * `CONSUMER_THREADS` - the number of threads to consume the source kafka 7 with
- * `TOPICS` - whitelist of topics to mirror
- * `ZK_CONNECT` - the zookeeper connect string of the source kafka 7
- * `GROUP_ID` - the group.id to use when consuming from kafka 7
+Using the Kafka utilities:
 
 ```bash
-docker run -p 2181:2181 -p 9092:9092 \
-    --env ADVERTISED_HOST=`boot2docker ip` \
-    --env ADVERTISED_PORT=9092 \
-    --env CONSUMER_THREADS=1 \
-    --env TOPICS=my-topic,some-other-topic \
-    --env ZK_CONNECT=kafka7zookeeper:2181/root/path \
-    --env GROUP_ID=mymirror \
-    spotify/kafkaproxy
+docker exec -it kafka /opt/kafka/bin/kafka-topics.sh --create --zookeeper localhost:2181 --partitions 4 --topic harambe
 ```
 
-In the box
----
-* **spotify/kafka**
+From another container:
 
-  The docker image with both Kafka and Zookeeper. Built from the `kafka`
-  directory.
-
-* **spotify/kafkaproxy**
-
-  The docker image with Kafka, Zookeeper and a Kafka 7 proxy that can be
-  configured with a set of topics to mirror.
-
-Public Builds
----
-
-https://registry.hub.docker.com/u/spotify/kafka/
-
-https://registry.hub.docker.com/u/spotify/kafkaproxy/
-
-Build from Source
----
-
-    docker build -t spotify/kafka kafka/
-    docker build -t spotify/kafkaproxy kafkaproxy/
-
-Todo
----
-
-* Not particularily optimzed for startup time.
-* Better docs
-
+```bash
+docker run --rm -it --link kafka gg77/kafka /opt/kafka/bin/kafka-topics.sh --describe --zookeeper kafka:2181
+```
