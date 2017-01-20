@@ -4,24 +4,25 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-if [ -n "${LOG_RETENTION_HOURS:-}" ]; then
-    echo "log retention hours: $LOG_RETENTION_HOURS"
-    sed -r -i "s/(log.retention.hours)=(.*)/\1=$LOG_RETENTION_HOURS/g" "$KAFKA_HOME/config/server.properties"
-fi
-if [ -n "${LOG_RETENTION_BYTES:-}" ]; then
-    echo "log retention bytes: $LOG_RETENTION_BYTES"
-    sed -r -i "s/#(log.retention.bytes)=(.*)/\1=$LOG_RETENTION_BYTES/g" "$KAFKA_HOME/config/server.properties"
-fi
+set_setting() {
+	name=$1
+	value=$2
+	file="$KAFKA_HOME/config/server.properties"
 
-if [ -n "${NUM_PARTITIONS:-}" ]; then
-    echo "default number of partition: $NUM_PARTITIONS"
-    sed -r -i "s/(num.partitions)=(.*)/\1=$NUM_PARTITIONS/g" "$KAFKA_HOME/config/server.properties"
-fi
+	sed -r -i "s/^[#\\s]*($name)[\\s]*=.*/\\1=$value/" "$file"
+	if grep -Pq "^$name=$value\$" "$file"; then
+		echo "$name: updated to '$value'"
+	else
+		echo "$name=$value" >> "$file";
+		echo "$name: added and set to '$value'"
+	fi
+}
 
-# Enable/disable auto creation of topics
-if [ -n "${AUTO_CREATE_TOPICS:-}" ]; then
-    echo "auto.create.topics.enable: $AUTO_CREATE_TOPICS"
-    echo "auto.create.topics.enable=$AUTO_CREATE_TOPICS" >> "$KAFKA_HOME/config/server.properties"
-fi
+env | grep -Po '(?<=^KAFKA_CONFIG_).*' | while IFS='=' read -r name value; do
+  set_setting "$(echo "${name//_/.}" | tr '[:upper:]' '[:lower:]')" "$value"
+done
+
+# reasonable default setting
+set_setting "auto.create.topics.enable" "true"
 
 exec "$KAFKA_HOME/bin/kafka-server-start.sh" "$KAFKA_HOME/config/server.properties"

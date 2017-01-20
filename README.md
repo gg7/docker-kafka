@@ -8,8 +8,9 @@ Forked from [spotify/docker-kafka](https://github.com/spotify/docker-kafka).
 Improvements:
 
 * Kafka/Zookeeper output is shown on `stdout`/`stderr` (see [veithen's blog](https://veithen.github.io/2015/01/08/supervisord-redirecting-stdout.html))
+* You can override ***any*** broker configuration setting through environment variables
 * Uses the bundled Zookeeper in Kafka, instead of the one in apt (smaller Docker image)
-* The base image can now be easily changed (e.g. to alpine)
+* The base image can now be easily changed (e.g. newer ubuntu)
 * Kafka logs are kept on a VOLUME, giving us better IO performance
 * Simplified and improved Dockerfile, kafka startup script, and supervisord config
 * Doesn't run as `root`
@@ -32,17 +33,17 @@ docker pull gg77/kafka
 # Using the image
 
 ```bash
-docker run --rm -it --name kafka --hostname kafka gg77/kafka
+docker run --rm -it KAFKA_CONFIG_MESSAGE_MAX_BYTES=1337 --name kafka --hostname kafka gg77/kafka
 ```
 
 Using the Kafka utilities:
 
 ```bash
-docker exec -it kafka /opt/kafka/bin/kafka-topics.sh --create --zookeeper localhost:2181 --partitions 4 --topic harambe
+docker exec -it kafka /home/kafka/kafka/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 4 --topic harambe
 ```
 
 From another container:
 
 ```bash
-docker run --rm -it --link kafka gg77/kafka /opt/kafka/bin/kafka-topics.sh --describe --zookeeper kafka:2181
+docker run --rm -it --link kafka gg77/kafka /home/kafka/kafka/bin/kafka-topics.sh --describe --zookeeper kafka:2181
 ```
