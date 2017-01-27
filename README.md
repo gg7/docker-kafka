@@ -1,3 +1,5 @@
+[![DockerHub pulls](https://img.shields.io/docker/pulls/gg77/kafka.svg)](https://hub.docker.com/r/gg77/kafka)
+
 # About
 
 Single-broker [Kafka](https://kafka.apache.org/) + single-node
