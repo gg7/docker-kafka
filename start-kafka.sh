@@ -3,16 +3,20 @@
 set -o errexit
 set -o nounset
 
+server_properties_file="$KAFKA_HOME/config/server.properties"
+
+# ensure there's a trailing newline
+echo >> "$server_properties_file"
+
 set_setting() {
 	name=$1
 	value=$2
-	file="$KAFKA_HOME/config/server.properties"
 
-	sed -r -i "s/^[#\\s]*($name)[\\s]*=.*/\\1=$value/" "$file"
-	if grep -Pq "^$name=$value\$" "$file"; then
+	sed -r -i "s/^[#\\s]*($name)[\\s]*=.*/\\1=$value/" "$server_properties_file"
+	if grep -Pq "^$name=$value\$" "$server_properties_file"; then
 		echo "$name: updated to '$value'"
 	else
-		echo "$name=$value" >> "$file";
+		echo "$name=$value" >> "$server_properties_file";
 		echo "$name: added and set to '$value'"
 	fi
 }
