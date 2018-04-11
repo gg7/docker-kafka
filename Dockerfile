@@ -6,14 +6,14 @@ RUN echo '2017-01-19' && \
     rm -rf /var/lib/apt/lists/* /var/cache/*
 
 ARG SCALA_VERSION=2.11
-ARG KAFKA_VERSION=0.10.1.1
+ARG KAFKA_VERSION=1.1.0
 ENV KAFKA_HOME=/home/kafka/kafka_"$SCALA_VERSION"-"$KAFKA_VERSION"
 
 RUN adduser --disabled-password --gecos '' kafka
 USER kafka
 WORKDIR /home/kafka
 
-RUN wget -q http://apache.mirrors.spacedump.net/kafka/"$KAFKA_VERSION"/kafka_"$SCALA_VERSION"-"$KAFKA_VERSION".tgz -O kafka.tgz && \
+RUN wget -q http://www.mirrorservice.org/sites/ftp.apache.org/kafka/"$KAFKA_VERSION"/kafka_"$SCALA_VERSION"-"$KAFKA_VERSION".tgz -O kafka.tgz && \
     tar xfz kafka.tgz && \
     ln -s "kafka_${SCALA_VERSION}-${KAFKA_VERSION}" "kafka" && \
     rm kafka.tgz && \
